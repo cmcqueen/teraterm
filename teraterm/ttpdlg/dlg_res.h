@@ -69,7 +69,6 @@
 #define IDC_SERIALFLOW                  406
 #define IDC_SERIALDELAYCHAR             407
 #define IDC_SERIALDELAYLINE             408
-#define IDC_SERIALHELP                  499
 #define IDD_TCPIPDLG                    500
 #define IDC_TCPIPHISTORY                507
 #define IDC_TCPIPAUTOCLOSE              508
@@ -143,6 +142,7 @@
 #define IDC_SFMT_VERSION                1078
 #define IDC_SERIALTEXT                  1079
 #define IDC_GENLANUI_INFO               1080
+#define IDC_SERIAL_CONNECTION_INFO      1081
 #define IDC_GENHELP                     1099
 #define IDD_TERMDLG                     1100
 #define IDD_WINLISTDLG                  1200
@@ -152,13 +152,13 @@
 #define IDC_GENLANGUI_LABEL             1300
 
 // Next default values for new objects
-//
+// 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        103
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1081
+#define _APS_NEXT_CONTROL_VALUE         1082
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

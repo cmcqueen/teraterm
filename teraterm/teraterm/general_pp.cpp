@@ -281,24 +281,9 @@ void CGeneralPropPageDlg::OnInitDialog()
 
 	// default port
 	{
-		WORD w;
-		SendDlgItemMessageA(IDC_GENPORT, CB_ADDSTRING, 0, (LPARAM) "TCP/IP");
-		for (w=1;w<=pts->MaxComPort;w++) {
-			char Temp[8];
-			_snprintf_s(Temp, sizeof(Temp), _TRUNCATE, "COM%d", w);
-			SendDlgItemMessageA(IDC_GENPORT, CB_ADDSTRING, 0, (LPARAM)Temp);
-		}
-		if (pts->PortType==IdSerial) {
-			if (pts->ComPort <= pts->MaxComPort) {
-				w = pts->ComPort;
-			}
-			else {
-				w = 1; // COM1
-			}
-		}
-		else {
-			w = 0; // TCP/IP
-		}
+		WORD w = (pts->PortType == IdSerial) ? 1 : 0;
+		SendDlgItemMessageA(IDC_GENPORT, CB_ADDSTRING, 0, (LPARAM)"TCP/IP");
+		SendDlgItemMessageA(IDC_GENPORT, CB_ADDSTRING, 0, (LPARAM)"Serial");
 		SendDlgItemMessageA(IDC_GENPORT, CB_SETCURSEL, w, 0);
 	}
 
@@ -412,7 +397,6 @@ void CGeneralPropPageDlg::OnOK()
 		WORD w = (WORD)GetCurSel(IDC_GENPORT);
 		if (w > 0) {
 			pts->PortType = IdSerial;
-			pts->ComPort = w;
 		}
 		else {
 			pts->PortType = IdTCPIP;

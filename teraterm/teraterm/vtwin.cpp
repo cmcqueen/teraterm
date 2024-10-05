@@ -4211,6 +4211,39 @@ void CVTWindow::OnEditCancelSelection()
 	ChangeSelectRegion();
 }
 
+/*
+ *	シリアル接続で新しいプロセスを起動
+ *	 New connectionからシリアル接続する動作と基本的に同じ動作
+ */
+static void OpenNewComport(const TTTSet *pts)
+{
+	char Command[MAXPATHLEN + HostNameMaxLength];
+	char Temp[MAX_PATH], Str[MAX_PATH];
+
+	_snprintf_s(Command, sizeof(Command),
+				"ttermpro /C=%u /SPEED=%lu /CDELAYPERCHAR=%u /CDELAYPERLINE=%u ",
+				pts->ComPort, pts->Baud, pts->DelayPerChar, pts->DelayPerLine);
+
+	if (SerialPortConfconvertId2Str(COM_DATABIT, pts->DataBit, Temp, sizeof(Temp))) {
+		_snprintf_s(Str, sizeof(Str), _TRUNCATE, "/CDATABIT=%s ", Temp);
+		strncat_s(Command, sizeof(Command), Str, _TRUNCATE);
+	}
+	if (SerialPortConfconvertId2Str(COM_PARITY, pts->Parity, Temp, sizeof(Temp))) {
+		_snprintf_s(Str, sizeof(Str), _TRUNCATE, "/CPARITY=%s ", Temp);
+		strncat_s(Command, sizeof(Command), Str, _TRUNCATE);
+	}
+	if (SerialPortConfconvertId2Str(COM_STOPBIT, pts->StopBit, Temp, sizeof(Temp))) {
+		_snprintf_s(Str, sizeof(Str), _TRUNCATE, "/CSTOPBIT=%s ", Temp);
+		strncat_s(Command, sizeof(Command), Str, _TRUNCATE);
+	}
+	if (SerialPortConfconvertId2Str(COM_FLOWCTRL, pts->Flow, Temp, sizeof(Temp))) {
+		_snprintf_s(Str, sizeof(Str), _TRUNCATE, "/CFLOWCTRL=%s ", Temp);
+		strncat_s(Command, sizeof(Command), Str, _TRUNCATE);
+	}
+
+	TTWinExecA(Command);
+}
+
 /**
  *	Additional Setting を表示する
  */
@@ -4261,6 +4294,40 @@ BOOL CVTWindow::OpenExternalSetup(HWND hWndParent, CAddSettingPropSheetDlg::Page
 		{
 			//ResetKeypadMode(TRUE);
 			//ResetIME();
+		}
+
+		// シリアルタブ
+		if (ts.ComPort > 0) {
+
+			if (cv.Ready && (cv.PortType != IdSerial)) {
+				// シリアル以外に接続中の場合
+				//  TODO cv.Ready と cv.Openの差は?
+#if 0
+				OpenNewComport(&ts);
+				return;
+#endif
+			}
+			else if (!cv.Open) {
+				// 未接続の場合
+#if 0
+				CommOpen(m_hWnd,&ts,&cv);
+#endif
+			}
+			else {
+				// シリアルに接続中の場合
+#if 0
+				if (ts.ComPort != cv.ComPort) {
+					// ポートを変更する
+					CommClose(&cv);
+					CommOpen(HVTWin,&ts,&cv);
+				}
+				else
+#endif
+				{
+					// 通信パラメータを変更する
+					CommResetSerial(&ts, &cv, ts.ClearComBuffOnOpen);
+				}
+			}
 		}
 	}
 	free(orgTitle);
@@ -4341,70 +4408,13 @@ void CVTWindow::OnSetupKeyboard()
 	(*SetupKeyboard)(HVTWin, &ts);
 }
 
-static void OpenNewComport(const TTTSet *pts)
-{
-	char Command[MAXPATHLEN + HostNameMaxLength];
-	char Temp[MAX_PATH], Str[MAX_PATH];
-
-	_snprintf_s(Command, sizeof(Command),
-				"ttermpro /C=%u /SPEED=%lu /CDELAYPERCHAR=%u /CDELAYPERLINE=%u ",
-				pts->ComPort, pts->Baud, pts->DelayPerChar, pts->DelayPerLine);
-
-	if (SerialPortConfconvertId2Str(COM_DATABIT, pts->DataBit, Temp, sizeof(Temp))) {
-		_snprintf_s(Str, sizeof(Str), _TRUNCATE, "/CDATABIT=%s ", Temp);
-		strncat_s(Command, sizeof(Command), Str, _TRUNCATE);
-	}
-	if (SerialPortConfconvertId2Str(COM_PARITY, pts->Parity, Temp, sizeof(Temp))) {
-		_snprintf_s(Str, sizeof(Str), _TRUNCATE, "/CPARITY=%s ", Temp);
-		strncat_s(Command, sizeof(Command), Str, _TRUNCATE);
-	}
-	if (SerialPortConfconvertId2Str(COM_STOPBIT, pts->StopBit, Temp, sizeof(Temp))) {
-		_snprintf_s(Str, sizeof(Str), _TRUNCATE, "/CSTOPBIT=%s ", Temp);
-		strncat_s(Command, sizeof(Command), Str, _TRUNCATE);
-	}
-	if (SerialPortConfconvertId2Str(COM_FLOWCTRL, pts->Flow, Temp, sizeof(Temp))) {
-		_snprintf_s(Str, sizeof(Str), _TRUNCATE, "/CFLOWCTRL=%s ", Temp);
-		strncat_s(Command, sizeof(Command), Str, _TRUNCATE);
-	}
-
-	TTWinExecA(Command);
-}
-
 void CVTWindow::OnSetupSerialPort()
 {
-	BOOL Ok;
-
 	HelpId = HlpSetupSerialPort;
 	if (! LoadTTDLG()) {
 		return;
 	}
-	SetDialogFont(ts.DialogFontNameW, ts.DialogFontPoint, ts.DialogFontCharSet,
-				  ts.UILanguageFileW, "Tera Term", "DLG_SYSTEM_FONT");
-	Ok = (*SetupSerialPort)(HVTWin, &ts);
-
-	if (Ok && ts.ComPort > 0) {
-		/*
-		 * TCP/IPによる接続中の場合は新規プロセスとして起動する。
-		 * New connectionからシリアル接続する動作と基本的に同じ動作となる。
-		 */
-		if ( cv.Ready && (cv.PortType != IdSerial) ) {
-			OpenNewComport(&ts);
-			return;
-		}
-
-		if (cv.Open) {
-			if (ts.ComPort != cv.ComPort) {
-				CommClose(&cv);
-				CommOpen(HVTWin,&ts,&cv);
-			}
-			else {
-				CommResetSerial(&ts, &cv, ts.ClearComBuffOnOpen);
-			}
-		}
-		else {
-			CommOpen(HVTWin,&ts,&cv);
-		}
-	}
+	(*SetupSerialPort)(HVTWin, &ts);
 }
 
 void CVTWindow::OnSetupTCPIP()

@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 1994-1998 T. Teranishi
- * (C) 2007- TeraTerm Project
+ * (C) 2020- TeraTerm Project
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,41 +26,14 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* TERATERM.EXE, TTDLG interface */
-#include "teraterm.h"
-#include "tttypes.h"
-#include "ttplug.h" /* TTPLUG */
-#include "ttdlg.h"
+#include <windows.h>
 
-#include "ttdialog.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-PSetupTerminal SetupTerminal;
-PSetupWin SetupWin;
-PSetupKeyboard SetupKeyboard;
-PSetupSerialPort SetupSerialPort;
-PSetupTCPIP SetupTCPIP;
-PGetHostName GetHostName;
-PChangeDirectory ChangeDirectory;
-PAboutDialog AboutDialog;
-PChooseFontDlg ChooseFontDlg;
-PSetupGeneral SetupGeneral;
-PWindowWindow WindowWindow;
+HPROPSHEETPAGE SerialPageCreate(HINSTANCE inst, TTTSet *pts);
 
-BOOL LoadTTDLG()
-{
-	SetupTerminal = _SetupTerminal;
-	SetupWin = _SetupWin;
-	SetupKeyboard = _SetupKeyboard;
-	SetupSerialPort = _SetupSerialPort;
-	SetupTCPIP = _SetupTCPIP;
-	GetHostName = _GetHostName;
-	ChangeDirectory = _ChangeDirectory;
-	AboutDialog = _AboutDialog;
-	ChooseFontDlg = _ChooseFontDlg;
-	SetupGeneral = _SetupGeneral;
-	WindowWindow = _WindowWindow;
-
-	TTXGetUIHooks(); /* TTPLUG */
-
-	return TRUE;
+#ifdef __cplusplus
 }
+#endif
