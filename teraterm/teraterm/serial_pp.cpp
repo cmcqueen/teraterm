@@ -573,7 +573,7 @@ HPROPSHEETPAGE SerialPageCreate(HINSTANCE inst, TTTSet *pts)
 	psp.pfnCallback = CallBack;
 	wchar_t *UIMsg;
 	GetI18nStrWW("Tera Term", "DLG_SERIAL_TITLE",
-				 L"Serial port setup and connection", pts->UILanguageFileW, &UIMsg);
+				 L"Serial port", pts->UILanguageFileW, &UIMsg);
 	psp.pszTitle = UIMsg;
 	psp.pszTemplate = MAKEINTRESOURCEW(IDD_SERIALDLG);
 #if defined(REWRITE_TEMPLATE)
