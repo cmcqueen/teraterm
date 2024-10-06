@@ -1495,46 +1495,62 @@ CAddSettingPropSheetDlg::CAddSettingPropSheetDlg(HINSTANCE hInstance, HWND hPare
 	AddsettingWin parent_win = AddsettingCheckWin(hParentWnd);
 
 	// CPP,tmfcのTTCPropertyPage派生クラスから生成
+	HPROPSHEETPAGE page;
 	int i = 0;
 	if (parent_win == ADDSETTING_WIN_VT) {
-		m_Page[i++] = new CGeneralPropPageDlg(hInstance, hParentWnd, &cv);
-		m_Page[i++] = new CSequencePropPageDlg(hInstance);
-		m_Page[i++] = new CCopypastePropPageDlg(hInstance);
-		m_Page[i++] = new CVisualPropPageDlg(hInstance);
-		m_Page[i++] = new CLogPropPageDlg(hInstance);
-		m_Page[i++] = new CCygwinPropPageDlg(hInstance);
+		m_Page[i] = new CGeneralPropPageDlg(hInstance, hParentWnd, &cv);
+		page = m_Page[i]->CreatePropertySheetPage();
+		AddPage(page, L"端末");
+		i++;
+		m_Page[i] = new CSequencePropPageDlg(hInstance);
+		page = m_Page[i]->CreatePropertySheetPage();
+		AddPage(page, L"端末");
+		i++;
+		m_Page[i] = new CCopypastePropPageDlg(hInstance);
+		page = m_Page[i]->CreatePropertySheetPage();
+		AddPage(page, L"端末");
+		i++;
+		m_Page[i] = new CVisualPropPageDlg(hInstance);
+		page = m_Page[i]->CreatePropertySheetPage();
+		AddPage(page, L"表示");
+		i++;
+		m_Page[i] = new CLogPropPageDlg(hInstance);
+		page = m_Page[i]->CreatePropertySheetPage();
+		AddPage(page, L"端末");
+		i++;
+		m_Page[i] = new CCygwinPropPageDlg(hInstance);
+		page = m_Page[i]->CreatePropertySheetPage();
+		AddPage(page, L"接続");
+		i++;
 	}
 	if ((GetKeyState(VK_CONTROL) & 0x8000) != 0 ||
 		(GetKeyState(VK_SHIFT) & 0x8000) != 0 ) {
-		m_Page[i++] = new CDebugPropPage(hInstance);
+		m_Page[i] = new CDebugPropPage(hInstance);
+		page = m_Page[i]->CreatePropertySheetPage();
+		AddPage(page, L"Develop");
+		i++;
 	}
 	m_PageCountCPP = i;
-
-	HPROPSHEETPAGE page;
-	for (i = 0; i < m_PageCountCPP; i++) {
-		page = m_Page[i]->CreatePropertySheetPage();
-		AddPage(page);
-	}
 
 	// TTCPropertyPage を使用しない PropertyPage
 	if (parent_win == ADDSETTING_WIN_VT) {
 		page = CodingPageCreate(hInstance, &ts);
-		AddPage(page);
+		AddPage(page, L"端末");
 		page = FontPageCreate(hInstance, &ts);
-		AddPage(page);
+		AddPage(page, L"表示");
 		page = ThemePageCreate(hInstance, &ts);
-		AddPage(page);
+		AddPage(page, L"表示");
 		page = KeyboardPageCreate(hInstance, &ts);
-		AddPage(page);
+		AddPage(page, L"端末");
 		page = MousePageCreate(hInstance, &ts);
-		AddPage(page);
+		AddPage(page, L"端末");
 		page = TcpIPPageCreate(hInstance, &ts);
-		AddPage(page);
+		AddPage(page, L"接続");
 		page = CreateTerminalPP(hInstance, hParentWnd, & ts);
-		AddPage(page);
+		AddPage(page, L"端末");
 	}
 	page = CreateWinPP(hInstance, hParentWnd, &ts);
-	AddPage(page);
+	AddPage(page, L"表示");
 
 	wchar_t *title = TTGetLangStrW("Tera Term", "DLG_TABSHEET_TITLE", L"Tera Term: Additional settings", ts.UILanguageFileW);
 	SetCaption(title);
