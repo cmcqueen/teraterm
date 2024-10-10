@@ -33,12 +33,18 @@ extern "C" {
 #endif
 
 typedef struct {
-	wchar_t *port_name;			// ポート名
-	int port_no;				// 0..128(9x)/255(xp)
+	wchar_t *port_name;			// ポート名 "COM%d" 以外もある
+	int port_no;				// "COM%d" の %d部分 0の場合は "COM%d" 以外(1..128(9x)/255(xp)/2^32が上限?)
 	wchar_t *friendly_name;		// 存在しない場合は NULL
-	wchar_t *property;			// 存在しない場合は NULL
+	wchar_t *property;			// 個別の値をまとめた
+	// 個別の値
+	wchar_t *class_name;
+	wchar_t *instance_id;
+	wchar_t *manufacturer;
+	wchar_t *provider_name;
+	wchar_t *driverdate;
+	wchar_t *driverversion;
 } ComPortInfo_t;
-
 ComPortInfo_t *ComPortInfoGet(int *count);
 void ComPortInfoFree(ComPortInfo_t *info, int count);
 

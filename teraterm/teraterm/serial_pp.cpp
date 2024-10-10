@@ -78,10 +78,10 @@ typedef struct {
 
 /*
  * シリアルポート設定ダイアログのテキストボックスにCOMポートの詳細情報を表示する。
- *
  */
-static void serial_dlg_set_comport_info(HWND dlg, SerialDlgData *dlg_data, int port_no)
+static void serial_dlg_set_comport_info(HWND dlg, SerialDlgData *dlg_data, int port_info_index)
 {
+#if 0
 	for (int i = 0; i < dlg_data->ComPortInfoCount; i++) {
 		const ComPortInfo_t *p = &dlg_data->ComPortInfoPtr[i];
 		if (p->port_no == port_no) {
@@ -89,7 +89,14 @@ static void serial_dlg_set_comport_info(HWND dlg, SerialDlgData *dlg_data, int p
 			return;
 		}
 	}
-	SetDlgItemTextW(dlg, IDC_SERIALTEXT, L"This port does not exist now.");
+#endif
+	if (port_info_index < dlg_data->ComPortInfoCount) {
+		const ComPortInfo_t *p = &dlg_data->ComPortInfoPtr[port_info_index];
+		SetDlgItemTextW(dlg, IDC_SERIALTEXT, p->property);
+	}
+	else {
+		SetDlgItemTextW(dlg, IDC_SERIALTEXT, L"This port does not exist now.");
+	}
 }
 
 /*
@@ -181,94 +188,122 @@ static LRESULT CALLBACK SerialDlgSpeedComboboxWindowProc(HWND hWnd, UINT msg, WP
 	return CallWindowProc(dlg_data->g_defSerialDlgSpeedComboboxWndProc, hWnd, msg, wp, lp);
 }
 
+/**
+ *	シリアルポートドロップダウンを設定する
+ *	ITEMDATA
+ *		0...	PortInfoの先頭からの番号 0からPortInfoCount-1まで
+ *		-1		現在存在しないポート
+ *		-2		"存在するポートのみ表示"
+ *		-3		"全てのポートを表示"
+ */
 static void SetPortDrop(HWND hWnd, int id, SerialDlgData *dlg_data)
 {
 	PTTSet ts = dlg_data->pts;
-	BOOL all = dlg_data->show_all_port;
+	BOOL show_all_port = dlg_data->show_all_port;
 	int max_com = ts->MaxComPort;
 	int sel_index = 0;
+	int drop_count = 0;
 	if (dlg_data->ComPortInfoCount == 0) {
 		// ポートが存在していないときはすべて表示する
-		all = TRUE;
+		show_all_port = TRUE;
 	}
-	if (all) {
-		for (int j = 0; j < max_com; j++) {
-			int i;
-			BOOL find = false;
-			ComPortInfo_t *p;
-			for (i = 0; i < dlg_data->ComPortInfoCount; i++) {
-				p = dlg_data->ComPortInfoPtr + i;
-				if (p->port_no == (j + 1)) {
-					find = true;
-					break;
-				}
+
+	// "COM%d" ではないポート
+	int port_index = 0;
+	const ComPortInfo_t *port_info = dlg_data->ComPortInfoPtr;
+	const ComPortInfo_t *p;
+	for (int i = 0; i < dlg_data->ComPortInfoCount; i++) {
+		p = port_info + port_index;
+		if (wcsncmp(p->port_name, L"COM", 3) == 0) {
+			break;
+		}
+		port_index++;
+		wchar_t *name;
+		if (p->friendly_name != NULL) {
+			aswprintf(&name, L"%s: %s", p->port_name, p->friendly_name);
+		}
+		else {
+			aswprintf(&name, L"%s: (no name, exists)", p->port_name);
+		}
+		int index = SendDlgItemMessageW(hWnd, id, CB_ADDSTRING, 0, (LPARAM)name);
+		free(name);
+		SendDlgItemMessageA(hWnd, id, CB_SETITEMDATA, index, i);
+		drop_count++;
+	}
+
+	// 伝統的な "COM%d"
+	BOOL all = show_all_port;
+	for (int j = 1;; j++) {
+		if (j >= max_com) {
+			all = FALSE;
+		}
+
+		wchar_t *com_name;
+		int item_data;
+		if (port_index == dlg_data->ComPortInfoCount) {
+			if (!all) {
+				break;
 			}
-			wchar_t *name;
-			if (find) {
+			aswprintf(&com_name, L"COM%d", j);
+			item_data = -1;
+		}
+		else {
+			p = port_info + port_index;
+
+			if (p->port_no == j) {
+				item_data = port_index;
+				port_index++;
+
 				if (p->friendly_name != NULL) {
-					aswprintf(&name, L"%s: %s", p->port_name, p->friendly_name);
+					aswprintf(&com_name, L"%s: %s", p->port_name, p->friendly_name);
 				}
 				else {
-					aswprintf(&name, L"%s: (no name, exists)", p->port_name);
+					aswprintf(&com_name, L"%s: (no friendly name, exist)", p->port_name);
 				}
 			}
 			else {
-				aswprintf(&name, L"COM%d", j+1);
-			}
-			int index = SendDlgItemMessageW(hWnd, id, CB_ADDSTRING, 0, (LPARAM)name);
-			SendDlgItemMessageA(hWnd, id, CB_SETITEMDATA, index, j+1);
-			free(name);
-			if (j + 1 == ts->ComPort) {
-				sel_index = j;
-			}
-		}
-		int index = SendDlgItemMessageW(hWnd, id, CB_ADDSTRING, 0, (LPARAM)L"<存在するポートのみ表示>");
-		SendDlgItemMessageA(hWnd, id, CB_SETITEMDATA, index, -1);
-	}
-	else {
-		// 存在しているポートだけ表示する
-		if (dlg_data->ComPortInfoCount > 0) {
-			// COMポートあり
-			int w = 0;
-			for (int i = 0; i < dlg_data->ComPortInfoCount; i++) {
-				ComPortInfo_t *p = dlg_data->ComPortInfoPtr + i;
-
-				// MaxComPort を越えるポートは表示しない
-				if (i > max_com) {
+				if (j != ts->ComPort && !all) {
 					continue;
 				}
-
-				wchar_t *name;
-				aswprintf(&name, L"%s: %s", p->port_name, p->friendly_name);
-				int index = SendDlgItemMessageW(hWnd, id, CB_ADDSTRING, 0, (LPARAM)name);
-				SendDlgItemMessageA(hWnd, id, CB_SETITEMDATA, index, p->port_no);
-				free(name);
-
-				if (p->port_no == ts->ComPort) {
-					sel_index = i;
-				}
-			}
-			serial_dlg_set_comport_info(hWnd, dlg_data, ts->ComPort);
-
-			if (cv.Open && (cv.PortType == IdSerial)) {
-				// 接続中の時は選択できないようにする
-				EnableWindow(GetDlgItem(hWnd, id), FALSE);
+				aswprintf(&com_name, L"COM%d", j);
+				item_data = -1;
 			}
 		}
-		else {
-			// COMポートなし
-			//EnableWindow(GetDlgItem(hWnd, id), FALSE);
-			serial_dlg_set_comport_info(hWnd, dlg_data, 0);
+
+		if (j == ts->ComPort) {
+			sel_index = drop_count;
 		}
+		int index = SendDlgItemMessageW(hWnd, id, CB_ADDSTRING, 0, (LPARAM)com_name);
+		SendDlgItemMessageA(hWnd, id, CB_SETITEMDATA, index, item_data);
+		drop_count++;
+	}
+	if (show_all_port) {
+		int index = SendDlgItemMessageW(hWnd, id, CB_ADDSTRING, 0, (LPARAM)L"<存在するポートのみ表示>");
+		SendDlgItemMessageA(hWnd, id, CB_SETITEMDATA, index, -2);
+	}
+	else {
 		wchar_t *s;
 		aswprintf(&s, L"<COM%dまで表示>", max_com);
 		int index = SendDlgItemMessageW(hWnd, id, CB_ADDSTRING, 0, (LPARAM)s);
 		free(s);
-
-		SendDlgItemMessageA(hWnd, id, CB_SETITEMDATA, index, -1);
+		SendDlgItemMessageA(hWnd, id, CB_SETITEMDATA, index, -3);
 	}
+
+	serial_dlg_set_comport_info(hWnd, dlg_data, ts->ComPort);
+
 	ExpandCBWidth(hWnd, id);
-	SendDlgItemMessage(hWnd, id, CB_SETCURSEL, sel_index, 0);
+	if (dlg_data->ComPortInfoCount == 0) {
+		// COMポートなし
+		//EnableWindow(GetDlgItem(hWnd, id), FALSE);
+		serial_dlg_set_comport_info(hWnd, dlg_data, -1);
+	}
+	else {
+		if (cv.Open && (cv.PortType == IdSerial)) {
+			// 接続中の時は選択できないようにする
+			EnableWindow(GetDlgItem(hWnd, id), FALSE);
+		}
+		SendDlgItemMessage(hWnd, id, CB_SETCURSEL, sel_index, 0);
+	}
 }
 
 /*
@@ -496,32 +531,22 @@ static INT_PTR CALLBACK SerialDlg(HWND Dialog, UINT Message, WPARAM wParam, LPAR
 						// リストからCOMポートが選択された
 						SerialDlgData *dlg_data = (SerialDlgData *)GetWindowLongPtrW(Dialog, DWLP_USER);
 						int sel = (int)SendDlgItemMessageA(Dialog, IDC_SERIALPORT, CB_GETCURSEL, 0, 0);
-						int port_no = (int)SendDlgItemMessageA(Dialog, IDC_SERIALPORT, CB_GETITEMDATA, sel, 0);
-						if (port_no == -1) {
+						int item_data = (int)SendDlgItemMessageA(Dialog, IDC_SERIALPORT, CB_GETITEMDATA, sel, 0);
+						if (item_data >= 0) {
+							// 詳細情報を表示する
+							serial_dlg_set_comport_info(Dialog, dlg_data, item_data);
+						}
+						else if (item_data == -1) {
+							// 情報なしを表示する
+							serial_dlg_set_comport_info(Dialog, dlg_data, 10000);
+						}
+						else {
 							// 選択方法変更
-							dlg_data->show_all_port = dlg_data->show_all_port ? FALSE : TRUE;
+							dlg_data->show_all_port = (item_data == -2) ? FALSE : TRUE;
 							SendDlgItemMessageA(Dialog, IDC_SERIALPORT, CB_RESETCONTENT, 0, 0);
 							SetPortDrop(Dialog, IDC_SERIALPORT, dlg_data);
 						}
-						else {
-							if (dlg_data->show_all_port) {
-								;
-							}
-							else {
-								if (dlg_data->ComPortInfoCount == 0) {
-									port_no = -1;
-								}
-								else {
-									port_no = dlg_data->ComPortInfoPtr[sel].port_no;
-								}
-							}
-
-							// 詳細情報を表示する
-							serial_dlg_set_comport_info(Dialog, dlg_data, port_no);
-						}
-
 						break;
-
 					}
 
 					return TRUE;

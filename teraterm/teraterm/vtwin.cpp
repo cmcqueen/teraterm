@@ -114,6 +114,7 @@
 #include "logdlg.h"
 #include "makeoutputstring.h"
 #include "ttlib_types.h"
+#include "externalsetup.h"
 
 #include <initguid.h>
 #if _MSC_VER < 1600
@@ -150,7 +151,7 @@ static vtwin_work_t vtwin_work;
 
 extern "C" PrintFile *PrintFile_;
 
-static CVTWindow *pVTWin;
+CVTWindow *pVTWin;
 
 /////////////////////////////////////////////////////////////////////////////
 // CVTWindow
@@ -4072,10 +4073,7 @@ void CVTWindow::OnFileQVSend()
 
 void CVTWindow::OnFileChangeDir()
 {
-	if (! LoadTTDLG()) {
-		return;
-	}
-	(*ChangeDirectory)(HVTWin, &ts);
+	OpenSetupGeneral();
 }
 
 void CVTWindow::OnFilePrint()
@@ -4245,119 +4243,16 @@ static void OpenNewComport(const TTTSet *pts)
 }
 
 /**
- *	Additional Setting を表示する
- */
-BOOL CVTWindow::OpenExternalSetup(HWND hWndParent, CAddSettingPropSheetDlg::Page page)
-{
-	BOOL old_use_unicode_api = UnicodeDebugParam.UseUnicodeApi;
-	char *orgTitle = _strdup(ts.Title);
-	ts.SampleFont = VTFont[0];	// for Windowタブ
-	SetDialogFont(ts.DialogFontNameW, ts.DialogFontPoint, ts.DialogFontCharSet,
-				  ts.UILanguageFileW, "Tera Term", "DLG_TAHOMA_FONT");
-	CAddSettingPropSheetDlg CAddSetting(m_hInst, hWndParent);
-	CAddSetting.SetTreeViewMode(ts.ExperimentalTreeProprtySheetEnable);
-	CAddSetting.SetStartPage(page);
-	INT_PTR ret = CAddSetting.DoModal();
-	if (ret == IDOK) {
-		// Generalタブ
-		{
-			ResetCharSet();
-			ResetIME();
-		}
-		// Windowタブ
-		{
-			SetColor();
-
-			// タイトルが変更されていたら、リモートタイトルをクリアする
-			if ((ts.AcceptTitleChangeRequest == IdTitleChangeRequestOverwrite) &&
-				(strcmp(orgTitle, ts.Title) != 0)) {
-				free(cv.TitleRemoteW);
-				cv.TitleRemoteW = NULL;
-			}
-		}
-
-		ChangeWin();
-		ChangeFont();
-
-		// Encodingタブ
-		{
-			if (old_use_unicode_api != UnicodeDebugParam.UseUnicodeApi) {
-				BuffSetDispAPI(UnicodeDebugParam.UseUnicodeApi);
-			}
-
-			// コーディングタブ(Terminal tab)で設定が変化したときコールする必要がある
-			SetupTerm();
-		}
-		TelUpdateKeepAliveInterval();
-
-		// keyboardタブ
-		{
-			//ResetKeypadMode(TRUE);
-			//ResetIME();
-		}
-
-		// シリアルタブ
-		if (ts.ComPort > 0) {
-
-			if (cv.Ready && (cv.PortType != IdSerial)) {
-				// シリアル以外に接続中の場合
-				//  TODO cv.Ready と cv.Openの差は?
-#if 0
-				OpenNewComport(&ts);
-				return;
-#endif
-			}
-			else if (!cv.Open) {
-				// 未接続の場合
-#if 0
-				CommOpen(m_hWnd,&ts,&cv);
-#endif
-			}
-			else {
-				// シリアルに接続中の場合
-#if 0
-				if (ts.ComPort != cv.ComPort) {
-					// ポートを変更する
-					CommClose(&cv);
-					CommOpen(HVTWin,&ts,&cv);
-				}
-				else
-#endif
-				{
-					// 通信パラメータを変更する
-					CommResetSerial(&ts, &cv, ts.ClearComBuffOnOpen);
-				}
-			}
-		}
-	}
-	free(orgTitle);
-
-	return (ret == IDOK) ? TRUE : FALSE;
-}
-
-/**
- *	クラス外からその他の設定を開くために追加
- */
-BOOL OpenExternalSetupOutside(HWND hWndParent, CAddSettingPropSheetDlgPage page)
-{
-	return pVTWin->OpenExternalSetup(hWndParent, (CAddSettingPropSheetDlg::Page)page);
-}
-
-/**
  * Additional settings dialog
  */
 void CVTWindow::OnExternalSetup()
 {
-	OpenExternalSetup(m_hWnd, CAddSettingPropSheetDlg::DefaultPage);
+	OpenExternalSetup(m_hWnd);
 }
 
 void CVTWindow::OnSetupTerminal()
 {
-	HelpId = HlpSetupTerminal;
-	if (! LoadTTDLG()) {
-		return;
-	}
-	(*SetupTerminal)(HVTWin, &ts);
+	OpenSetupTerminal();
 }
 
 /**
@@ -4382,53 +4277,36 @@ void CVTWindow::SetColor()
 	if (set_color) {
 		DispResetColor(CS_ALL);
 	}
-
 }
 
 void CVTWindow::OnSetupWindow()
 {
-	ts.SampleFont = VTFont[0];
-	if (! LoadTTDLG()) {
-		return;
-	}
-	(*SetupWin)(HVTWin, &ts);
+	OpenSetupWin();
 }
 
 void CVTWindow::OnSetupFont()
 {
-	(*ChooseFontDlg)(HVTWin, NULL, &ts);
+	OpenSetupFont();
 }
 
 void CVTWindow::OnSetupKeyboard()
 {
-	HelpId = HlpSetupKeyboard;
-	if (! LoadTTDLG()) {
-		return;
-	}
-	(*SetupKeyboard)(HVTWin, &ts);
+	OpenSetupKeyboard();
 }
 
 void CVTWindow::OnSetupSerialPort()
 {
-	HelpId = HlpSetupSerialPort;
-	if (! LoadTTDLG()) {
-		return;
-	}
-	(*SetupSerialPort)(HVTWin, &ts);
+	OpenSetupSerialPort();
 }
 
 void CVTWindow::OnSetupTCPIP()
 {
-	(*SetupTCPIP)(HVTWin, &ts);
+	OpenSetupTCPIP();
 }
 
 void CVTWindow::OnSetupGeneral()
 {
-	HelpId = HlpSetupGeneral;
-	if (! LoadTTDLG()) {
-		return;
-	}
-	(*SetupGeneral)(HVTWin,&ts);
+	OpenSetupGeneral();
 }
 
 void CVTWindow::OnSetupSave()
@@ -5203,10 +5081,6 @@ LRESULT CVTWindow::Proc(UINT msg, WPARAM wp, LPARAM lp)
 		case ID_EDIT_SELECTALL: OnEditSelectAllBuffer(); break;
 		case ID_EDIT_SELECTSCREEN: OnEditSelectScreenBuffer(); break;
 		case ID_SETUP_ADDITIONALSETTINGS: OnExternalSetup(); break;
-		case ID_SETUP_ADDITIONALSETTINGS_CODING: {
-			OpenExternalSetup(m_hWnd, CAddSettingPropSheetDlg::CodingPage);
-			break;
-		}
 		case ID_SETUP_TERMINAL: OnSetupTerminal(); break;
 		case ID_SETUP_WINDOW: OnSetupWindow(); break;
 		case ID_SETUP_FONT: OnSetupFont(); break;

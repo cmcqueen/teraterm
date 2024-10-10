@@ -31,12 +31,12 @@
 #include <windows.h>
 
 #include "tttypes.h"
-#include "vtwin.h"
+#include "externalsetup.h"
 
 #include "ttdlg.h"
 
 BOOL WINAPI _SetupTCPIP(HWND WndParent, PTTSet ts)
 {
 	(void)ts;
-	return OpenExternalSetupOutside(WndParent, TcpIpPage);
+	return OpenExternalSetupTab(WndParent, TcpIpPage);
 }

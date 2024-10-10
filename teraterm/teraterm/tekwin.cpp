@@ -743,15 +743,13 @@ void CTEKWindow::OnSetupFont()
 	BOOL Ok;
 
 	HelpId = HlpTEKSetupFont;
-	if (! LoadTTDLG()) {
+	if (!LoadTTDLG()) {
 		return;
 	}
-	Ok = (*ChooseFontDlg)(HTEKWin,&tk.TEKlf,&ts);
-	if (! Ok) {
-		return;
+	Ok = (*ChooseFontDlg)(m_hWnd/*HTEKWin*/, &tk.TEKlf, &ts);
+	if (Ok == IDOK) {
+		TEKSetupFont(&tk, &ts);
 	}
-
-	(*TEKSetupFont)(&tk,&ts);
 }
 
 void CTEKWindow::OnVTWin()

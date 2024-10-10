@@ -297,6 +297,9 @@
     <ClCompile Include="serial_pp.cpp">
       <Filter>dialog</Filter>
     </ClCompile>
+    <ClCompile Include="externalsetup.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\..\cygterm\cygterm.ico">
@@ -641,6 +644,9 @@
     </ClInclude>
     <ClInclude Include="serial_pp.h">
       <Filter>dialog</Filter>
+    </ClInclude>
+    <ClInclude Include="externalsetup.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
