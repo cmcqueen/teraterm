@@ -151,8 +151,6 @@ static vtwin_work_t vtwin_work;
 
 extern "C" PrintFile *PrintFile_;
 
-CVTWindow *pVTWin;
-
 /////////////////////////////////////////////////////////////////////////////
 // CVTWindow
 
