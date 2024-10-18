@@ -277,6 +277,7 @@ static void SetPortDrop(HWND hWnd, int id, SerialDlgData *dlg_data)
 		SendDlgItemMessageA(hWnd, id, CB_SETITEMDATA, index, item_data);
 		drop_count++;
 	}
+#if 0
 	if (show_all_port) {
 		int index = SendDlgItemMessageW(hWnd, id, CB_ADDSTRING, 0, (LPARAM)L"<存在するポートのみ表示>");
 		SendDlgItemMessageA(hWnd, id, CB_SETITEMDATA, index, -2);
@@ -288,6 +289,7 @@ static void SetPortDrop(HWND hWnd, int id, SerialDlgData *dlg_data)
 		free(s);
 		SendDlgItemMessageA(hWnd, id, CB_SETITEMDATA, index, -3);
 	}
+#endif
 
 	serial_dlg_set_comport_info(hWnd, dlg_data, ts->ComPort);
 
@@ -425,6 +427,7 @@ static INT_PTR CALLBACK SerialDlg(HWND Dialog, UINT Message, WPARAM wParam, LPAR
 				GWLP_WNDPROC,
 				(LONG_PTR)SerialDlgSpeedComboboxWindowProc);
 
+#if 0
 			{
 				wchar_t *s = NULL;
 				if (cv.Open && (cv.PortType == IdSerial)) {
@@ -453,6 +456,10 @@ static INT_PTR CALLBACK SerialDlg(HWND Dialog, UINT Message, WPARAM wParam, LPAR
 				SetDlgItemTextW(Dialog, IDC_SERIAL_CONNECTION_INFO, s);
 				free(s);
 			}
+#else
+			ShowWindow(GetDlgItem(Dialog, IDC_SERIAL_CONNECTION_INFO), SW_HIDE);
+			EnableWindow(GetDlgItem(Dialog, IDC_SERIAL_CONNECTION_INFO), FALSE);
+#endif
 
 			return TRUE;
 		}
@@ -589,7 +596,8 @@ HPROPSHEETPAGE SerialPageCreate(HINSTANCE inst, TTTSet *pts)
 	Param->hInst = inst;
 	Param->pts = pts;
 	Param->ComPortInfoPtr = ComPortInfoGet(&Param->ComPortInfoCount);
-	Param->show_all_port = FALSE;
+	//Param->show_all_port = FALSE;
+	Param->show_all_port = TRUE;
 
 	PROPSHEETPAGEW_V1 psp = {};
 	psp.dwSize = sizeof(psp);
