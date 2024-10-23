@@ -164,6 +164,7 @@
 #define HlpMenuSetupAdditionalCygwin        43032
 #define HlpMenuSetupAdditionalWindow        43033
 #define HlpMenuSetupAdditionalTerminal      43034
+#define HlpMenuSetupAdditionalSerialPort    43035
 #define HlpMenuSetupSave                    43013
 #define HlpMenuSetupRestore                 43014
 #define HlpMenuSetupDir                     43016

@@ -393,7 +393,7 @@ DLG_KEYB_DISABLE=முடக்கப்பட்ட பயன்முறை:
 DLG_KEYB_APPKEY=&பயன்பாட்டு விசைப்பலகை
 DLG_KEYB_APPCUR=பயன்பாடு &சிமிட்டும் கோடு
 
-DLG_SERIAL_TITLE=தேரா முனை: தொடர் துறைமுகம் அமைவு மற்றும் இணைப்பு
+DLG_SERIAL_TITLE=தொடர் துறைமுகம்
 DLG_SERIAL_PORT=&துறைமுகம்:
 DLG_SERIAL_BAUD=வேகம்:
 DLG_SERIAL_DATA=&தரவு:
